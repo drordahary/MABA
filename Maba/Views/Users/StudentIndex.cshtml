@@ -1,0 +1,164 @@
+﻿@model Maba.Models.ViewModel
+@{
+    ViewData["Title"] = "StudentIndex";
+}
+
+<p hidden>
+    @ViewData["DisplayEmail"];
+    @ViewData["DisplayPhone"];
+</p>
+
+<h2 align="right">
+    ברוך הבא,
+    @ViewData["DisplayName"]
+</h2>
+<br />
+<div class="container">
+    <div class="row">
+        <div class="col-xs-10">
+            <p style="float: right; margin-right: -170px;">
+                <button id="btnclick" type="button">
+                    עדכון פרטים אישיים
+                </button>
+            </p>
+
+            <div class="modal fade" id="StudentIndex">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            סגור
+                        </button>
+                        <h4 class="modal-title">עדכן</h4>
+                        <div class="modal-body">
+                            <form asp-controller="Users" asp-action="StudentUpdateDetails">
+                                <div>
+                                    <label asp-for="Details[0].Email" class="control-label"></label>
+                                    <input asp-for="Details[0].Email" class="form-control" type="email" name="email"
+                                           id="gmailtxt" value=@ViewData["DisplayEmail"] />
+                                    <span asp-validation-for="Details[0].Email" class="text-danger"></span>
+                                </div>
+
+                                
+
+                                <label asp-for="Details[0].Phone" class="control-label"></label>
+                                <input asp-for="Details[0].Phone" class="form-control" type="tel" name="phone" pattern="(?:\(\d{3}\)|\d{3})[- ]?\d{3}[- ]?\d{4}"
+                                       id="phonetxt" value=@ViewData["DisplayPhone"] />
+                                <br />
+                                <span asp-validation-for="Details[0].Phone" class="text-danger"></span>
+
+
+                                <div class="form-group">
+                                    <input type="submit" value="שמור" class="btn btn-default" />
+                                </div>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+@*<script src="bootstrap/js/bootstrap.min.js"></script>*@
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#btnclick").click(function () {
+            $("#StudentIndex").modal('show');
+
+        });
+
+        $("HidebtnModal").click(function () {
+            $("StudentIndex").modal('hide');
+
+        });
+
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-xs-10">
+            <p style="float: right; margin-right: -170px;">
+                <button id="btnclickRep" type="button">
+                    עדכון שעות
+                </button>
+            </p>
+
+            <div class="modal fade" id="StudentIndexRep">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            סגור
+                        </button>
+                        <h4 class="modal-title">עדכן</h4>
+                        <div class="modal-body">
+                            <form asp-controller="Users" asp-action="ReportNewTime">                                
+                                <div>
+                                    <label asp-for="Reports[0].StartTime" class="control-label"></label>
+                                    <input asp-for="Reports[0].StartTime" class="form-control" type="DateTime" 
+                                           value="@Html.ValueFor(model => model.Reports[0].StartTime, "{0:dd/MM/yyyy HH:mm}")"
+                                           name="start" />
+                                    <span asp-validation-for="Reports[0].StartTime" class="text-danger"></span>
+                                </div>
+
+
+                                <label asp-for="Reports[0].EndTime" class="control-label"></label>
+                                <input asp-for="Reports[0].EndTime" class="form-control" type="DateTime" value="@Html.ValueFor(model => model.Reports[0].StartTime, "{0:dd/MM/yyyy HH:mm}")"
+                                       name="end" />
+                                <br />
+                                <span asp-validation-for="Reports[0].EndTime" class="text-danger"></span>
+
+
+                                <div class="form-group">
+                                    <input type="submit" value="שמור" class="btn btn-default" />
+                                </div>
+                            </form>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#btnclickRep").click(function () {
+            $("#StudentIndexRep").modal('show');
+
+        });
+
+        $("HidebtnModal").click(function () {
+            $("StudentIndexRep").modal('hide');
+
+        });
+
+    });
+</script>
+
