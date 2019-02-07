@@ -36,9 +36,10 @@
                                     <input asp-for="Details[0].Email" class="form-control" type="email" name="email"
                                            id="gmailtxt" value=@ViewData["DisplayEmail"] />
                                     <span asp-validation-for="Details[0].Email" class="text-danger"></span>
+
                                 </div>
 
-                                
+
 
                                 <label asp-for="Details[0].Phone" class="control-label"></label>
                                 <input asp-for="Details[0].Phone" class="form-control" type="tel" name="phone" pattern="(?:\(\d{3}\)|\d{3})[- ]?\d{3}[- ]?\d{4}"
@@ -64,6 +65,7 @@
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 @*<script src="bootstrap/js/bootstrap.min.js"></script>*@
+
 <script type="text/javascript">
     $(document).ready(function () {
         $("#btnclick").click(function () {
@@ -89,8 +91,7 @@
 
 
 
-
-
+@*------------Time Report----------*@
 
 
 
@@ -111,26 +112,36 @@
                         </button>
                         <h4 class="modal-title">עדכן</h4>
                         <div class="modal-body">
-                            <form asp-controller="Users" asp-action="ReportNewTime">                                
+                            <form asp-controller="Users" asp-action="ReportNewTime">
                                 <div>
                                     <label asp-for="Reports[0].StartTime" class="control-label"></label>
-                                    <input asp-for="Reports[0].StartTime" class="form-control" type="DateTime" 
-                                           value="@Html.ValueFor(model => model.Reports[0].StartTime, "{0:dd/MM/yyyy HH:mm}")"
+                                    <input asp-for="Reports[0].StartTime" class="form-control" type="datetime"
+                                           value="k"
                                            name="start" />
                                     <span asp-validation-for="Reports[0].StartTime" class="text-danger"></span>
                                 </div>
 
 
+                                @*    (modelItem => item.StartTime, "{dd/MM/yyyy HH:mm}")    @ViewData["NowDate"]*@
+
                                 <label asp-for="Reports[0].EndTime" class="control-label"></label>
-                                <input asp-for="Reports[0].EndTime" class="form-control" type="DateTime" value="@Html.ValueFor(model => model.Reports[0].StartTime, "{0:dd/MM/yyyy HH:mm}")"
+                                <input asp-for="Reports[0].EndTime" class="form-control" type="datetime" value="@Html.ValueFor(model => model.Reports[0].StartTime, "{0:dd/MM/yyyy HH:mm}")"
                                        name="end" />
                                 <br />
                                 <span asp-validation-for="Reports[0].EndTime" class="text-danger"></span>
 
 
+
+
+
+
+                                <textarea name="remarks" style="width:250px;height:150px;"></textarea>
+
+
                                 <div class="form-group">
                                     <input type="submit" value="שמור" class="btn btn-default" />
                                 </div>
+
                             </form>
 
                         </div>
@@ -142,8 +153,6 @@
         </div>
     </div>
 </div>
-
-
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
@@ -162,3 +171,74 @@
     });
 </script>
 
+
+@if (TempData["DateError"] != null)
+{
+    @Html.Raw(TempData["DateError"]);
+}
+
+@if (TempData["Error"] != null)
+{
+    @Html.Raw(TempData["Error"]);
+}
+
+@if (TempData["ValueError"] != null)
+{
+    @Html.Raw(TempData["ValueError"]);
+}
+
+<hr />
+<br />
+<br />
+
+<form asp-controller="Users" asp-action="StudentIndex">
+    <p>
+        Start time: <input type="datetime" name="start">     
+        End Time: <input type="datetime" name="end">
+        <input type="submit" value="Search" />
+    </p>
+</form>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Reports[0].StartTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Reports[0].EndTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Reports[0].TotalTime)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Reports[0].Remarks)
+            </th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model.Reports)
+        {
+            <tr>
+                <td>
+                    @*      @Html.ValueFor(model => model.Reports[0].StartTime, "{0:dd/MM/yyyy HH:mm}")      *@
+
+                    @Html.ValueFor(modelitem => item.StartTime, "{0:dd/MM/yyyy HH:mm}")
+                </td>
+                <td>
+                    @Html.ValueFor(modelitem => item.EndTime, "{0:dd/MM/yyyy HH:mm}")
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TotalTime)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Remarks)
+                </td>
+            
+          
+            </tr>
+        }
+    </tbody>
+</table>

@@ -11,18 +11,16 @@ namespace Maba.Models
 	public class TimeReport
 	{
 
-
 		public string IDNum { get; set; }
-		[DataType(DataType.Date)]
+		[DataType(DataType.DateTime)]
 		public DateTime? StartTime { get; set; }
-		[DataType(DataType.Date)]
+		[DataType(DataType.DateTime)]
 		public DateTime? EndTime { get; set; }
 		public double TotalTime { get; set; }
 		//public string Remarks { get; set; }
 		public long ID { get; set; }
-		public double? TotalTimeMonth { get; set; }
-		public double? TotalTimeYear { get; set; }
-
-
+		public string Remarks { get; set; }
+		[DataType(DataType.DateTime)]
+		public DateTime? NowDate { get; set; }
 	}
 }

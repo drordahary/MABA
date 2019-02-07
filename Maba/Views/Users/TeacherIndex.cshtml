@@ -1,4 +1,4 @@
-﻿@model Maba.Models.Grades
+﻿@model Maba.Models.Users
 
 @{
     ViewData["Title"] = "Index";
@@ -21,25 +21,25 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.students[0].IDNumber)
+                @Html.DisplayNameFor(model => model.IDNumber)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.students[0].Grade)
+                @Html.DisplayNameFor(model => model.Grade)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.students[0].FullName)
+                @Html.DisplayNameFor(model => model.FullName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.students[0].Hours)
+                @Html.DisplayNameFor(model => model.Hours)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.students[0].Description)
+                @Html.DisplayNameFor(model => model.Description)
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.students)
+        @foreach (var item in Model.UserList)
         {
             <tr>
                 <td>

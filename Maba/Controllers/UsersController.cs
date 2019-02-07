@@ -38,7 +38,7 @@ namespace Maba.Controllers
 
 			foreach (var role in _context.User)
 			{
-				if (role.Role == null)
+				if (role.Role == null || role.Role == "Student")
 				{
 					role.Role = "Student";
 					studentsVar = studentsVar.Where(s => s.Grade == passedTeacherGrade && s.Role == "Student");
@@ -51,17 +51,19 @@ namespace Maba.Controllers
 			}
 
 
-			var studentGradeVM = new Grades
+			var studentGradeVM = new Users
 			{
-				students = await studentsVar.ToListAsync()
+				UserList = await studentsVar.ToListAsync()
 			};
 
-			return View(studentsVar);
-			
+
+			return View(studentGradeVM);
 		}
 
 
-		public async Task<IActionResult> StudentIndex()
+
+
+		public async Task<IActionResult> StudentIndex(string start, string end)
 		{
 			string passedID = TempData["ID"].ToString();
 			TempData.Keep("ID");
@@ -74,6 +76,8 @@ namespace Maba.Controllers
 			ViewData["DisplayName"] = passedName;
 
 
+			
+
 			var getUserSource = from m in _context.User
 								where m.IDNumber == passedID
 								select m;
@@ -84,27 +88,98 @@ namespace Maba.Controllers
 								 select n;
 
 
+			////////////////////////////////
+			string formats = "dd/MM/yyyy HH:mm";
+
+			string nowDate = DateTime.Now.ToString();
+			DateTime now = DateTime.ParseExact(nowDate, formats, new CultureInfo("he-IL"), DateTimeStyles.None);
+
+			ViewData["NowDate"] = nowDate;
+
+			////////////////////////////
+
+
+			TimeReport tr = new TimeReport
+			{
+				StartTime = DateTime.Now,
+				EndTime = DateTime.Now
+			};
+			List<TimeReport> _Reports = new List<TimeReport>();
+
+			
+			_Reports.Add(tr);
+			
+
 			var VMConnection = new ViewModel
 			{
 				Details = await getUserSource.ToListAsync(),
-				Reports = await getUserReports.ToListAsync()
+				Reports = _Reports
 			};
+			VMConnection.Reports.AddRange(await getUserReports.ToListAsync());
 
-			if (VMConnection.Reports.Count == 0)
+			var getTimeSpan = from n in _context.TimeReport
+							  where n.IDNum == passedID
+							  select n;
+
+
+			DateTime startSelected;
+			DateTime endSelected;
+
+			if (!String.IsNullOrEmpty(start) && !String.IsNullOrEmpty(end))
 			{
-				TimeReport tr = new TimeReport
+
+
+				try
 				{
-					StartTime = DateTime.Now,
-					EndTime = DateTime.Now
-				};
-				VMConnection.Reports.Add(tr);
+					if (start.Length < 16)
+					{
+						if (start[11] != '0' && start[0] != 0)
+						{
+							start = start.Insert(11, "0");
+						}
+					}
+
+
+					if (end.Length < 16)
+					{
+						if (end[11] != '0')
+						{
+							end = end.Insert(11, "0");
+						}
+					}
+
+				}
+				catch (Exception)
+				{
+					//TempData["ValueError"] = "<script>alert('חיפוש שעות לא חוקי');</script>";
+					//TempData.Keep("ValueError");
+				}
+
+
+
+
+
+				startSelected = DateTime.ParseExact(start, formats, new CultureInfo("he-IL"), DateTimeStyles.None);
+				endSelected = DateTime.ParseExact(end, formats, new CultureInfo("he-IL"), DateTimeStyles.None);
+
+				getTimeSpan = from m in _context.TimeReport
+							  where m.IDNum == passedID && m.StartTime <= startSelected && m.EndTime >= endSelected
+							  select m;
+
+
+
 			}
+
+			VMConnection.Reports = await getTimeSpan.ToListAsync();
 
 			ViewData["DisplayEmail"] = VMConnection.Details[0].Email;
 			ViewData["DisplayPhone"] = VMConnection.Details[0].Phone;
 
+
 			return View(VMConnection);
 		}
+
+
 
 
 		[HttpPost]
@@ -114,6 +189,8 @@ namespace Maba.Controllers
 			string id = TempData["ID"].ToString();
 			var student = await _context.User
 				.FirstOrDefaultAsync(m => m.IDNumber == id);
+
+
 			try
 			{
 				MailAddress ma = new MailAddress(email);
@@ -123,6 +200,7 @@ namespace Maba.Controllers
 			{
 				Console.WriteLine(e.StackTrace);
 			}
+
 
 			if (!String.IsNullOrEmpty(phone))
 			{
@@ -134,15 +212,17 @@ namespace Maba.Controllers
 
 			_context.SaveChanges();
 			
+
 			return RedirectToAction(nameof(StudentIndex));
 		}
 
 
 
 
+
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> ReportNewTime(string start, string end, int year, int month)
+		public async Task<IActionResult> ReportNewTime(string start, string end, int year, int month, string remarks)
 		{
 			string passedID = TempData["ID"].ToString();
 
@@ -152,44 +232,92 @@ namespace Maba.Controllers
 			};
 
 
-			string[] formats = { "dd/MM/yyyy HH:mm" };
+			string formats = "dd/MM/yyyy HH:mm";
 			string[] formatForStartMonth = { "01/MM/yyyy" };
 			string[] formatForEndMonth = { "dd/MM/yyyy" };
+
 
 			var obj = await _context.TimeReport
 				.FirstOrDefaultAsync(i => i.IDNum == passedID);
 
 			month = DateTime.Now.Month;
 			year = DateTime.Now.Year;
+
 			int days = DateTime.DaysInMonth(year, month);
 
 
-			DateTime getStart = DateTime.ParseExact(start, formats, new CultureInfo("en-US"), DateTimeStyles.None);
-			DateTime getLast = DateTime.ParseExact(end, formats, new CultureInfo("en-US"), DateTimeStyles.None);
+			
+
+
+			try
+			{
+				if (start.Length < 16)
+				{
+					if (start[11] != '0' && start[0] != 0)
+					{
+						start = start.Insert(11, "0");
+					}
+				}
+
+
+				if (end.Length < 16)
+				{
+					if (end[11] != '0')
+					{
+						end = end.Insert(11, "0");
+					}
+				}
+				
+			}
+			catch (Exception)
+			{
+				TempData["ValueError"] = "<script>alert('הכנסת דיווח לא חוקית');</script>";
+				TempData.Keep("ValueError");
+
+				return RedirectToAction(nameof(StudentIndex));
+			}
+
+
+			DateTime getStart;
+			DateTime getLast;
+
+
+			try
+			{
+				getStart = DateTime.ParseExact(start, formats, new CultureInfo("he-IL"), DateTimeStyles.None);
+				getLast = DateTime.ParseExact(end, formats, new CultureInfo("he-IL"), DateTimeStyles.None);
+			}
+			catch (Exception)
+			{
+				TempData["DateError"] = "<script>alert('מבנה תאריך לא חוקי');</script>";
+				TempData.Keep("DateError");
+				
+
+				return RedirectToAction(nameof(StudentIndex));
+			}
+
 
 			TimeSpan duration = getLast - getStart;
 
 			int total = duration.Hours;
 
 			
-
 			string startMonth = "01/" + month + "/" + year;
 			string endMonth = days + "/" + month + "/" + year;
 
-			DateTime getStartMonth = DateTime.ParseExact(startMonth, formatForStartMonth, new CultureInfo("en-US"), DateTimeStyles.None);
-			DateTime getEndMonth = DateTime.ParseExact(endMonth, formatForEndMonth, new CultureInfo("en-US"), DateTimeStyles.None);
-
+			DateTime getStartMonth = DateTime.ParseExact(startMonth, formatForStartMonth, new CultureInfo("he-IL"), DateTimeStyles.None);
+			DateTime getEndMonth = DateTime.ParseExact(endMonth, formatForEndMonth, new CultureInfo("he-IL"), DateTimeStyles.None);
 
 
 			if (duration.Hours < 10 && duration.Hours > 0)
 			{
 				report.StartTime = getStart;
 				report.EndTime = getLast;
-				
+
 
 				var getTotalID = from t in _context.TimeReport
-							where t.IDNum == passedID
-							select t.IDNum;
+								 where t.IDNum == passedID
+								 select t.IDNum;
 
 				var getTotalTime = from m in _context.TimeReport
 								   where m.IDNum == passedID
@@ -208,38 +336,41 @@ namespace Maba.Controllers
 
 				report.TotalTime = total;
 
-
-
-				
-
-				
-
-				//double sum = from m in _context.TimeReport
-				//			where m.IDNum == passedID && m.StartTime >= getStartMonth && m.EndTime <= getEndMonth
-				//			select m.TotalTime).Sum();
-
-				
-
-
+				report.Remarks = remarks;
 
 				await _context.AddAsync(report);
 				_context.SaveChanges();
 
-				double sum = _context.TimeReport
+
+				double sumMonth = _context.TimeReport
 					.Where(t => t.IDNum == passedID && t.StartTime >= getStartMonth && t.EndTime <= getEndMonth)
 					.Select(t => t.TotalTime).Sum();
 
-				
 
-				
+				double sumYear = _context.TimeReport
+					.Where(m => m.IDNum == passedID)
+					.Select(t => t.TotalTime).Sum();
+
+
+				ViewData["Error"] = null;
 
 				_context.SaveChanges();
 			}
-			
 
+			else
+			{
+				TempData["Error"] = "<script>alert('לא ניתן לדווח יותר מ 10 שעות');</script>";
+				TempData.Keep("Error");
+				
+			}
+			
 
 			return RedirectToAction(nameof(StudentIndex));
 		}
+
+
+
+
 
 		// GET: Students/Details/5
 		public async Task<IActionResult> Details(int? id)
@@ -251,6 +382,7 @@ namespace Maba.Controllers
 
 			var student = await _context.User
 				.FirstOrDefaultAsync(m => m.ID == id);
+
 			if (student == null)
 			{
 				return NotFound();
@@ -275,11 +407,20 @@ namespace Maba.Controllers
 			if (ModelState.IsValid)
 			{
 				_context.Add(student);
+
 				await _context.SaveChangesAsync();
+
+
 				return RedirectToAction(nameof(TeacherIndex));
 			}
+
+
 			return View(student);
 		}
+
+
+
+
 
 		// GET: Students/Edit/5
 		public async Task<IActionResult> Edit(int? id)
@@ -290,12 +431,19 @@ namespace Maba.Controllers
 			}
 
 			var student = await _context.User.FindAsync(id);
+
 			if (student == null)
 			{
 				return NotFound();
 			}
+
+
 			return View(student);
 		}
+
+
+
+
 
 		// POST: Students/Edit/5
 		// To protect from overposting attacks, please enable the specific properties you want to bind to, for 
@@ -332,8 +480,12 @@ namespace Maba.Controllers
 						throw;
 					}
 				}
+
+
 				return RedirectToAction(nameof(TeacherIndex));
 			}
+
+
 			return View(student);
 		}
 
@@ -347,6 +499,7 @@ namespace Maba.Controllers
 
 			var student = await _context.User
 				.FirstOrDefaultAsync(m => m.ID == id);
+
 			if (student == null)
 			{
 				return NotFound();
@@ -361,8 +514,12 @@ namespace Maba.Controllers
 		public async Task<IActionResult> DeleteConfirmed(int id)
 		{
 			var student = await _context.User.FindAsync(id);
+
 			_context.User.Remove(student);
+
 			await _context.SaveChangesAsync();
+
+
 			return RedirectToAction(nameof(TeacherIndex));
 		}
 
@@ -387,6 +544,7 @@ namespace Maba.Controllers
 
 				var obj = await _context.User
 					.FirstOrDefaultAsync(i => i.IDNumber == idNumber && i.Password == password);
+
 				var users = from m in _context.User
 							select m;
 
@@ -408,11 +566,14 @@ namespace Maba.Controllers
 						TempData["TeacherGrade"] = teacherGrade;
 						TempData["TeacherName"] = teacher;
 
+
 						return RedirectToAction(nameof(TeacherIndex));
 					}
+
 					else if (retUser.Role == null || retUser.Role == "Student")
 					{
 						retUser.Role = "Student";
+
 						if (obj.IDNumber == retUser.IDNumber && obj.Password == retUser.Password)
 						{
 							retUser.LastLogin = DateTime.Now;
@@ -422,11 +583,11 @@ namespace Maba.Controllers
 							string email = retUser.Email;
 							string phone = retUser.Phone;
 
+
 							TempData["ID"] = id;
 							TempData["Username"] = name;
 							TempData["UserEmail"] = email;
 							TempData["UserPhone"] = phone;
-
 
 
 							return RedirectToAction(nameof(StudentIndex));
@@ -445,10 +606,13 @@ namespace Maba.Controllers
 			}
 
 			var student = await _context.User.FindAsync(id);
+
 			if (student == null)
 			{
 				return NotFound();
 			}
+
+
 			return View(student);
 		}
 
@@ -466,7 +630,6 @@ namespace Maba.Controllers
 			
 			
 			_context.SaveChanges();
-
 			
 			
 			if (id != studentUser.ID)
@@ -492,8 +655,12 @@ namespace Maba.Controllers
 						throw;
 					}
 				}
+
+
 				return RedirectToAction(nameof(StudentIndex));
 			}
+
+
 			return View(result);
 		}
 
@@ -507,14 +674,14 @@ namespace Maba.Controllers
 
 			var student = await _context.User
 				.FirstOrDefaultAsync(m => m.ID == id);
+
 			if (student == null)
 			{
 				return NotFound();
 			}
 
+
 			return View(student);
 		}
 	}
 }
-
-

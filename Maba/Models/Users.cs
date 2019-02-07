@@ -36,7 +36,7 @@ namespace Maba.Models
 		public string Role { get; set; }
 		public string School { get; set; }
 
-		//public List<UserDetail> UserList;
+		public List<Users> UserList;
 	}
 		
 	
